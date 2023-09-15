@@ -1,0 +1,4 @@
+>> Welcome to Employee portal  
+>> Please add to add Employee or use command addemp
+>> Press exit to quit the Application
+>> Press list to see all employees

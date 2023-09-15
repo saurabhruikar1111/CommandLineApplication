@@ -1,0 +1,10 @@
+[
+    {
+        "command":"add",
+        "description":"Add Employee"
+    },
+    {
+        "command":"list",
+        "description":"List All the employees"
+    }
+]
