@@ -6,5 +6,21 @@
     {
         "command":"list",
         "description":"List All the employees"
+    },
+    {
+        "command":"show",
+        "description":"Show data of the user"
+    },
+    {
+        "command":"clear",
+        "description":"clear terminal"
+    },
+    {
+        "command":"help",
+        "description":"list all the available commands"
+    },
+    {
+        "command":"exit",
+        "description":"quit the program"
     }
 ]
