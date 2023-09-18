@@ -2,6 +2,10 @@
 
 **EmployeeManagement** is a Command-line Application that allows users to manage employee data.
 
+## Dependencies:
+1. Make sure your system has python 3.0 or above installed
+2. pip must be installed in the system.
+
 ## Quickstart
 
 After successfully cloning the repository follow a few simple steps
