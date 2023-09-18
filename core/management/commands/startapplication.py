@@ -27,13 +27,14 @@ class Command(BaseCommand):
         }
 
         self.prompts = {
-            "command": ">> Enter Command: ",
+            "command": ">> (Use 'help' command to know more)\n>> Enter Command: ",
             "name": ">> Please Enter Employee Name: ",
             "age": ">> Please Enter Employee Age: ",
             "department": ">> Please Enter Employee Department: ",
             "exit":">> Exiting Program........",
             "serverError": ">> Internal Server Error: Please try again later",
-            "DeleteWarning": ">> Are you sure you want to delete user? press N/n to cancel delete: "
+            "deleteWarning": ">> Are you sure you want to delete user? press N/n to cancel delete: ",
+            "addWarning": ">> Are you sure want to add user? press N/n to cancel add: "
         }
 
     def commnad_to_function_map(self,command):
@@ -45,7 +46,7 @@ class Command(BaseCommand):
         mapper_function()
 
     def invalid_command(self):
-        self.stdout.write("Invalid command, Please enter command help to know more")
+        self.stdout.write("Invalid command, use command 'help' to know more")
 
     def handle(self,*args,**kwargs):
         file_path = "core/management/commands/welcome_text.txt"
@@ -69,17 +70,16 @@ class Command(BaseCommand):
         age = self.validation.take_input(prompt=self.prompts["age"], argument_name="age")
         department = self.validation.take_input(self.prompts["department"],argument_name="department")
 
-        new_employee = {
-            "name":name,
-            "age":age,
-            "department":department
-            }
-        self.Employees.append(new_employee)
-
+        # Adding Employee to the database
         try:
-            Employee.objects.create(name=name,age=age,department=department)
-        except Exception:
-            self.stdout.write(self.style.HTTP_SERVER_ERROR(self.prompts["serverError"]))
+            input = self.validation.take_input(self.style.WARNING(self.prompts["addWarning"]))
+            if input in ["n","N"]:
+                self.stdout.write(self.style.NOTICE("Add Operation Canceled"))
+                return
+            else:
+                Employee.objects.create(name=name,age=age,department=department)
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(self.validation.initiate_internal_server_error(e,return_error=True)))
         
         self.stdout.write(self.style.SUCCESS(f"Employee {name} added Successfully!\n"))
 
@@ -105,7 +105,7 @@ class Command(BaseCommand):
        if data:
            table = tabulate(data,headers,tablefmt="grid")
            self.clear()
-           self.stdout.write(table+"\n")
+           self.stdout.write("\n"+"\n"+table+"\n"+"\n")
        else:
            self.stdout.write(self.style.MIGRATE_HEADING("No Data to Display!")) 
 
@@ -120,32 +120,37 @@ class Command(BaseCommand):
         self.tabulate_data(data=employee_data,headers=self.EmployeeHeaders)
 
     def delete(self):
-        name = self.validation.take_input(prompt=self.prompts["name"])
+        name = self.validation.take_input(prompt="Please Enter name of employee you want to delete: ",argument_name="empty_input")
         try:
             user = Employee.objects.filter(name=name).first()
             if user:
-                input_ = input(self.style.WARNING(self.prompts["DeleteWarning"])).strip()
+                input_ = input(self.style.WARNING(self.prompts["deleteWarning"])).strip()
                 if input_ in ["n","N"]:
                     self.stdout.write(self.style.NOTICE("Delete operation cancel"))
                     return
                 else:
-                    if user: user.delete()
-        except Exception:
-            self.stdout.write(self.style.ERROR(self.prompts["serverError"]))
-        self.stdout.write(self.style.NOTICE(f"User {name} Deleted Successfully"))
-
+                    if user: 
+                        user.delete()
+                        self.stdout.write(self.style.NOTICE(f"User {name} Deleted Successfully"))
+            
+            else:
+                self.stdout.write(self.style.NOTICE(f"User {name} Not Found you can use list command to check employee exists or not"))
+                
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(self.validation.initiate_internal_server_error(e,return_error=True)))
+        
     def list(self):
         try:
             employee_list = list(Employee.objects.all())
             employee_data = [(emp.name,emp.age,emp.department) for emp in employee_list]
-        except Exception:
-            self.stdout.write(self.style.ERROR(self.prompts["serverError"]))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"{self.prompts['serverError']}: {str(e)}"))
             return
         self.tabulate_data(data=employee_data,headers=self.EmployeeHeaders)
 
     def exit(self):
         self.stdout.write(self.style.WARNING(self.prompts["exit"]))
-        time.sleep(1.5)
+        time.sleep(0.5)
         sys.exit(0)
 
 

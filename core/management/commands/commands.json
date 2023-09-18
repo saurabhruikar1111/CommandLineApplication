@@ -4,6 +4,10 @@
         "description":"Add Employee"
     },
     {
+        "command":"delete",
+        "description":"Delete the Employee"
+    },
+    {
         "command":"list",
         "description":"List All the employees"
     },
@@ -23,4 +27,4 @@
         "command":"exit",
         "description":"quit the program"
     }
-]
+    ]

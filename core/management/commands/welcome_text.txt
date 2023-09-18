@@ -1,4 +1,4 @@
 >> Welcome to Employee portal  
 >> Use command "add" to add employee
 >> Use command "exit" to quit the Application
->> Use help command to see all command
+>> Use "help" command to display all commands

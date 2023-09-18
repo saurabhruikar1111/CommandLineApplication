@@ -52,6 +52,8 @@ class EmployeeValidation(BaseCommand):
             "name":self.validate_name,
             "age":self.validate_age,
             "department":self.validate_department,
+            "user_is_unique":self.validate_user_is_unique,
+            "empty_input":self.validate_empty_input,
             "default_validation":self.default_validation,
         }
     
@@ -67,58 +69,73 @@ class EmployeeValidation(BaseCommand):
                 return validation_obj.input
             self.stdout.write(self.style.ERROR(validation_obj.error_msg))
 
+    # default validation is called even if there is no validation is passed in take_input method
     def default_validation(self,input):
         self.validation_obj.refresh()
         input = input.strip()
         self.validation_obj.input = input
         return self.validation_obj
      
-    def check_user_exists(self,name):
-        return bool(Employee.objects.filter(name=name).first())
+    # validation fails if user exists
+    def validate_user_is_unique(self,name):
+        self.default_validation(name)
+        try:
+            if Employee.objects.filter(name=name).exists():
+                self.validation_obj.status = False
+                self.validation_obj.error_msg = f"user {name} already exists in Database please try with diffrent name"
+                self.validation_obj.input = name
+            return self.validation_obj
+        except Exception as e:
+            return self.initiate_internal_server_error(e)    
+    
+    def validate_length(self,input,min,max):
+        self.default_validation(input)
+        input = self.validation_obj.input
+
+        if len(input)<min or len(input)>max:
+            self.validation_obj.status = False
+            self.validation_obj.error_msg = f"Input length must be in the range of {str(min)} and {str(max)}"
+        
+        #self.validation_obj = input
+        return self.validation_obj
     
     def validate_name(self,name):
-        name = name.strip()
-        self.validation_obj.refresh()
+        self.default_validation(name)
+        invalid_symbols = ["!","@","#","$","%","^","*","(",")","-","+","[","]","~",",","'",'"']
+        invalid_digits = [str(i) for i in range(10)]
+ 
+        # checks for invalid symbol or digit
+        # validation 1
+        constains_symbol = any(symbol in name for symbol in invalid_symbols)
+        constains_digit = any(digit in name for digit in invalid_digits)
+        if constains_digit or constains_symbol:
+            self.validation_obj.status=False
+            self.validation_obj.error_msg = "Name can not have a digit or symbol in it"
+            return self.validation_obj
         
-        # Check for empty input
-        # if not name:
-        #     self.validation_obj.error_msg = "Name can not be empty"
-        #     self.validation_obj.status = False
-        #     return self.validation_obj
-        self.check_empty_input(input=name,input_name="Name")
+        # checks for empty input
+        # validation 2
+        self.validate_empty_input(input=name,input_name="Name")
         if not self.validation_obj.status:
             return self.validation_obj
         
+        # checks if name is already availabel in database
+        # validation 3
         try:
-            if self.check_user_exists(name):
-                self.validation_obj.error_msg = f"name {name} exisits in database, You can try to change a spelling"
-                self.validation_obj.status = False
-                self.validation_obj.input = name
+            self.validate_user_is_unique(name)
+            if not self.validation_obj:
                 return self.validation_obj
+        except Exception as e:
+            return self.initiate_internal_server_error(e)
         
-        except Exception:
-            self.validation_obj.error_msg = "Internal Server Error, Please try after some time"
-            self.validation_obj.status = False
-            self.validation_obj.input = name
-            return self.validation_obj
-        
-        
-        self.validation_obj.input = name
         return self.validation_obj
 
     def validate_age(self,age):
-        age=age.strip()
-        self.validation_obj.refresh()
+        self.default_validation(age)
         
-        # if not age:
-        #     self.validation_obj.error_msg = "Age can not be empty"
-        #     self.validation_obj.status = False
-        #     return self.validation_obj
-        
-        self.check_empty_input(input=age,input_name="Age")
+        self.validate_empty_input(input=age,input_name="Age")
         if not self.validation_obj.status:
             return self.validation_obj
-        
         
         if age[0] =="0":
             self.validation_obj.status = False
@@ -139,7 +156,6 @@ class EmployeeValidation(BaseCommand):
             self.validation_obj.error_msg = "Please Enter a Valid Age only in numbers"
             return self.validation_obj
         
-        
         # checks valid age 
         if age<18 or age>50:
             self.validation_obj.status=False
@@ -149,32 +165,35 @@ class EmployeeValidation(BaseCommand):
         self.validation_obj.input = str(age)
         return self.validation_obj
         
-    def refresh_validation_obj(self):
-        self.validation_obj.status = True
-        self.validation_obj.error_msg = ""
-        self.validation_obj.input = ""
-
     def validate_department(self,department):
-        department = department.strip()
-        self.validation_obj.refresh()
+        self.default_validation(department)
         
-        # if not department:
-        #     self.validation_obj.error_msg = "Department can not be empty, Please Enter Department"
-        #     self.validation_obj.status = False
-        #     return self.validation_obj
-        
-        self.check_empty_input(input=department,input_name="Department")
+        self.validate_empty_input(input=department,input_name="Department")
         if not self.validation_obj.status:
             return self.validation_obj
         
+        # checking length
+        self.validate_length(min=1,max=40,input=department)
+        if not self.validation_obj.status:
+            return self.validation_obj
         
         self.validation_obj.input = department
         return self.validation_obj
 
-    def check_empty_input(self,input,input_name):
-        self.validation_obj.refresh()
+    def validate_empty_input(self,input,input_name=""):
+        self.default_validation(input)
+        input_name = input_name if input_name else "Input"
         if not input:
             self.validation_obj.error_msg = f"{input_name} can not be empty"
             self.validation_obj.status = False
-            return self.validation_obj
+        return self.validation_obj
 
+    # These method intitate internal server error 
+    # if return_error is true then it directly returns error if not then it returns validation object
+    # these is beneficial in case if we want to directly return error outside of the class
+    # hence it is a reusable function
+    def initiate_internal_server_error(self,e,return_error=False):
+        self.validation_obj.error_msg = f"Internal Server Error, Please try again later: {str(e)}"
+        self.validation_obj.status = False
+        
+        return self.validation_obj.error_msg if return_error else self.validation_obj
