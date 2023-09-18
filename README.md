@@ -4,19 +4,23 @@
 
 ## Quickstart
 
-After successfully clonning repository follow few simple steps
-To get started with EmployeeManagement, follow these steps:
+After successfully cloning the repository follow a few simple steps
+To get started with EmployeeManagements:
 
-1. Move to root directory
+1. Move to the root directory of the project
+```
 cd CommandLineApplication
-Note: Make sure you are in the root directory of folder where manage.py and requirements.txt file is present
-
+```
+### Note: Make sure you are in the root directory of the project where manage.py and requirements.txt file is present.
 2. Install the required dependencies:
+```
 pip install -r requirements.txt
+```
 
-2. Start the application:
+3. Start the application:
+```
 python manage.py startapplication
-
+```
 
 ## Commands
 
