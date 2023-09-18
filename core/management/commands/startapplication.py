@@ -113,6 +113,11 @@ class Command(BaseCommand):
         name = self.validation.take_input(prompt=self.prompts["name"])
         try:
             employee = Employee.objects.filter(name=name).first()
+            
+            if not employee:
+                space = "" if name else ""
+                self.stdout.write(self.style.WARNING(f"User {name}{space}Not Found!"))
+                return
             employee_data = [] if not employee else [(employee.name,employee.age,employee.department)]
         except Exception:
             self.stdout.write(self.style.ERROR(self.prompts["serverError"]))
